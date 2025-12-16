@@ -22,7 +22,12 @@ def init_google_sheet():
         # Hybrid Authentication: Secrets (Cloud) vs Local File (Dev)
         if "gcp_service_account" in st.secrets:
             # Cloud: Load from secrets
-            creds_dict = st.secrets["gcp_service_account"]
+            creds_dict = dict(st.secrets["gcp_service_account"]) # Create a copy
+            
+            # Fix for literal \n in private_key (common Streamlit Cloud issue)
+            if "private_key" in creds_dict:
+                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
         else:
             # Local: Load from file (Fallback)
