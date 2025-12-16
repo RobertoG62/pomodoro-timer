@@ -4,6 +4,7 @@ import time
 import os
 from datetime import datetime
 import gspread
+import base64
 from oauth2client.service_account import ServiceAccountCredentials
 from google.oauth2.service_account import Credentials
 import json
@@ -17,35 +18,24 @@ SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 # --- Helper Functions ---
 
 def init_google_sheet():
-    """Authenticates, returns sheet, and ensures headers exist."""
+    """Authenticates using Base64 encoded secrets (Final Solution)."""
     try:
-        # Hybrid Authentication: Secrets (Cloud) vs Local File (Dev)
-        if "gcp_service_account" in st.secrets:
-            # Cloud: Load from secrets
-            creds_dict = dict(st.secrets["gcp_service_account"]) # Create a copy
-            
-            # Fix for literal \n in private_key (common Streamlit Cloud issue)
-            if "private_key" in creds_dict:
-                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-
-            creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
-        else:
-            # Local: Load from file (Fallback)
-            creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPE)
-            
+        # Decode the Base64 string from secrets
+        encoded_key = st.secrets["GCP_JSON_BASE64"]
+        decoded_key = base64.b64decode(encoded_key).decode("utf-8")
+        creds_info = json.loads(decoded_key)
+        
+        # Create credentials
+        scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+        creds = Credentials.from_service_account_info(creds_info, scopes=scope)
         client = gspread.authorize(creds)
         
         # Open the spreadsheet
-        sheet = client.open(GOOGLE_SHEET_NAME).sheet1 # Assumes data is in the first sheet
-
-        # Ensure headers exist if empty
-        if not sheet.get_all_values():
-            headers = ["Date", "Time", "Task Name", "Duration (mins)", "Type"]
-            sheet.append_row(headers)
-
+        sheet = client.open(GOOGLE_SHEET_NAME).sheet1
         return sheet
+        
     except Exception as e:
-        st.error(f"Error connecting to Google Sheets: {e}")
+        st.error(f"Auth Error: {str(e)}")
         return None
 
 def save_to_google_sheet(task_name, duration, session_type):
@@ -165,7 +155,7 @@ if os.path.exists("service_account.json"):
     except Exception:
         pass
 
-st.title("🍅 Pomodoro Focus Timer")
+st.title("🍅 Pomodoro Focus Timer (v2.0 Cloud)")
 
 # Input for Task Name
 task_name = st.text_input("Task Name", placeholder="What are you working on?", key="task_input")
