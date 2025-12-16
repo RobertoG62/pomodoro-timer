@@ -155,7 +155,7 @@ if os.path.exists("service_account.json"):
     except Exception:
         pass
 
-st.title("🍅 Pomodoro Focus Timer (v2.0 Cloud)")
+st.title("🍅 Pomodoro Focus Timer")
 
 # Input for Task Name
 task_name = st.text_input("Task Name", placeholder="What are you working on?", key="task_input")
@@ -237,18 +237,4 @@ if not history_df.empty:
 else:
     st.info("No sessions logged yet.")
 
-# --- Debug: Cloud Connection Test ---
-st.sidebar.header("Debug Tools")
-if st.sidebar.button("Test Google Connection"):
-    try:
-        # Use existing logic to get sheet
-        sheet = init_google_sheet() 
-        if sheet:
-            # Try appending dummy row
-            row = ["TEST", "DEBUG", "Connection Test", "0", "Debug"]
-            sheet.append_row(row)
-            st.sidebar.success("Connection Verified! Row added.")
-        else:
-            st.sidebar.error("Failed to initialize sheet (returned None).")
-    except Exception as e:
-        st.sidebar.error(f"Connection Failed: {e}")
+
