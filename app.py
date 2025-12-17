@@ -9,17 +9,23 @@ from oauth2client.service_account import ServiceAccountCredentials
 from google.oauth2.service_account import Credentials
 import json
 
-def play_sound():
-    # Embedded Base64 audio (0.5s 880Hz Sine Wave Beep)
-    audio_base64 = "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"
+# --- Helper Functions ---
 
-    audio_bytes = base64.b64decode(audio_base64)
-    st.audio(audio_bytes, format='audio/wav', autoplay=True)
+def play_sound(sound_type="Ding"):
+    """Plays the selected notification sound."""
+    if sound_type == "Ding":
+        # Embedded Base64 audio (0.5s 880Hz Sine Wave Beep)
+        audio_base64 = "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"
+        audio_bytes = base64.b64decode(audio_base64)
+        st.audio(audio_bytes, format='audio/wav', autoplay=True)
+    elif sound_type == "Chime":
+        # Microwave timer countdown (short beep)
+        sound_url = "https://upload.wikimedia.org/wikipedia/commons/6/6e/Microwave_timer_countdown_04.wav"
+        st.audio(sound_url, format="audio/wav", autoplay=True)
     
-    st.toast("Ring Ring! 🔔", icon="🔊")
+    st.toast(f"Ring Ring! ({sound_type})", icon="🔊")
 
 # --- Configuration ---
-# LOG_FILE = "pomodoro_log.xlsx" # Commented out for Google Sheets
 GOOGLE_SHEET_NAME = "pomodoro_db"
 # Scope for Google Sheets and Drive API
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -88,38 +94,6 @@ def save_to_google_sheet(task_name, duration, session_type):
             print(f">>> ERROR: {e}")
             st.error(f"Error saving to Google Sheet: {e}")
 
-# Original Excel Logic (Commented Out)
-# def save_to_excel(task_name, duration, session_type):
-#     """Logs a completed session to the Excel file."""
-#     now = datetime.now()
-#     date_str = now.strftime("%Y-%m-%d")
-#     time_str = now.strftime("%H:%M:%S")
-#     
-#     new_data = {
-#         "Date": [date_str],
-#         "Time": [time_str],
-#         "Task Name": [task_name],
-#         "Duration (mins)": [duration],
-#         "Type": [session_type]
-#     }
-#     df_new = pd.DataFrame(new_data)
-#     
-#     if os.path.exists(LOG_FILE):
-#         try:
-#             # Append to existing file
-#             with pd.ExcelWriter(LOG_FILE, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
-#                 # Load existing to find the last row, or just append simply
-#                 # Easier way with pandas: Load, concat, save back.
-#                 # For simplicity and robustness against empty files:
-#                 df_existing = pd.read_excel(LOG_FILE)
-#                 df_final = pd.concat([df_existing, df_new], ignore_index=True)
-#                 df_final.to_excel(LOG_FILE, index=False)
-#         except Exception as e:
-#             st.error(f"Error saving to Excel: {e}")
-#     else:
-#         # Create new file
-#         df_new.to_excel(LOG_FILE, index=False)
-
 def get_history_from_sheet():
     """Returns the last 5 sessions from the Google Sheet."""
     sheet = init_google_sheet()
@@ -141,17 +115,6 @@ def get_history_from_sheet():
             st.error(f"Error reading from Google Sheet: {e}")
             return pd.DataFrame()
     return pd.DataFrame()
-
-# Start of original get_history
-# def get_history():
-#     """Returns the last 5 sessions from the Excel file."""
-#     if os.path.exists(LOG_FILE):
-#         try:
-#             df = pd.read_excel(LOG_FILE)
-#             return df.tail(5)[::-1] # Last 5, reversed order
-#         except Exception:
-#             return pd.DataFrame()
-#     return pd.DataFrame()
 
 def format_time(seconds):
     """Formats seconds into MM:SS string."""
@@ -241,10 +204,7 @@ if os.path.exists("service_account.json"):
     except Exception:
         pass
 
-st.title("🍅 Pomodoro Focus Timer")
-
-# --- Sidebar: To-Do List ---
-# --- Sidebar: To-Do List ---
+# --- Sidebar: To-Do List & Settings ---
 with st.sidebar:
     st.header("📝 My Tasks")
     
@@ -272,6 +232,19 @@ with st.sidebar:
                 delete_task_from_sheet(client, task)
                 st.rerun()
 
+    st.markdown("---")
+    # Settings Expander - Added expanded=True
+    with st.expander("⚙️ Settings", expanded=True):
+        focus_minutes = st.slider("Focus Time (min)", 5, 90, 25)
+        break_minutes = st.slider("Break Time (min)", 1, 30, 5)
+        theme = st.selectbox("Theme", ["Tomato 🍅", "Coffee ☕", "Code 💻", "Brain 🧠"])
+        sound_choice = st.radio("Sound", ["Ding", "Chime"])
+
+# --- Main Area ---
+# Parse Emoji from Theme
+emoji = theme.split()[-1]
+st.title(f"{emoji} Pomodoro Focus Timer")
+
 # Input for Task Name (Dropdown + Manual)
 task_options = current_tasks + ["Type manually..."]
 selected_task = st.selectbox("Select Task:", task_options)
@@ -291,26 +264,26 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# columns for controls
-# columns for controls
+def start_timer(minutes, mode):
+    st.session_state.timer_mode = mode
+    st.session_state.time_left = minutes * 60
+    st.session_state.timer_running = True
+    st.rerun()
+
+# Columns for controls
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("Start 25m Focus", use_container_width=True):
-        st.session_state.timer_mode = "Work"
-        st.session_state.time_left = 25 * 60
-        st.session_state.timer_running = True
-        st.rerun()
+    if st.button(f"Start Focus ({focus_minutes} min)", use_container_width=True):
+        start_timer(focus_minutes, "Work")
 
 with col2:
-    if st.button("Start 5m Break", use_container_width=True):
-        st.session_state.timer_mode = "Break"
-        st.session_state.time_left = 5 * 60
-        st.session_state.timer_running = True
-        st.rerun()
+    if st.button(f"Start Break ({break_minutes} min)", use_container_width=True):
+        start_timer(break_minutes, "Break")
 
 with col3:
     if st.button("🛠️ Test (5s)", use_container_width=True):
+        # Test mode uses 5 seconds
         st.session_state.timer_mode = "Test Run"
         st.session_state.time_left = 5
         st.session_state.timer_running = True
@@ -319,11 +292,11 @@ with col3:
 with col4:
     if st.button("Reset", use_container_width=True):
         st.session_state.timer_running = False
-        # Reset time based on current mode
+        # Reset time based on current settings and mode
         if st.session_state.timer_mode == "Work":
-            st.session_state.time_left = 25 * 60
+            st.session_state.time_left = focus_minutes * 60
         elif st.session_state.timer_mode == "Break":
-            st.session_state.time_left = 5 * 60
+            st.session_state.time_left = break_minutes * 60
         else:
             st.session_state.time_left = 25 * 60
         st.rerun()
@@ -339,18 +312,16 @@ if st.session_state.timer_running:
         st.session_state.timer_running = False
         
         # Visual and Sound Feedback
-        play_sound()
+        play_sound(sound_choice)
         st.balloons()
         st.toast("Time is up!", icon="🎉")
-        st.success("Timer Finished!")
         
         # Log if it was work or test
         if st.session_state.timer_mode in ["Work", "Test Run"]:
-            duration = 25 if st.session_state.timer_mode == "Work" else 0.08
+            duration = focus_minutes if st.session_state.timer_mode == "Work" else 0.08 # Approx 5s
             t_name = task_name if task_name else "Untitled Task"
             
             # Save to Google Sheets
-            print(">>> STARTING SAVE TO GOOGLE SHEETS...")
             save_to_google_sheet(t_name, duration, st.session_state.timer_mode)
             
             st.toast("Great job! Session logged.")
@@ -363,7 +334,6 @@ st.subheader("Recent Sessions")
 
 # Get history from Google Sheets
 history_df = get_history_from_sheet()
-# history_df = get_history()
 
 if not history_df.empty:
     st.dataframe(history_df, use_container_width=True)
@@ -372,5 +342,3 @@ else:
 
 # --- Analytics Dashboard ---
 show_analytics()
-
-
