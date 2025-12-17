@@ -26,26 +26,49 @@ SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 
 # --- Helper Functions ---
 
-def init_google_sheet():
-    """Authenticates using Base64 encoded secrets (Final Solution)."""
+def get_gspread_client():
+    """Authenticates and returns the authorized client."""
     try:
-        # Decode the Base64 string from secrets
         encoded_key = st.secrets["GCP_JSON_BASE64"]
         decoded_key = base64.b64decode(encoded_key).decode("utf-8")
         creds_info = json.loads(decoded_key)
-        
-        # Create credentials
         scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
         creds = Credentials.from_service_account_info(creds_info, scopes=scope)
         client = gspread.authorize(creds)
-        
-        # Open the spreadsheet
-        sheet = client.open(GOOGLE_SHEET_NAME).sheet1
-        return sheet
-        
+        return client
     except Exception as e:
         st.error(f"Auth Error: {str(e)}")
         return None
+
+def init_google_sheet():
+    """Returns the main worksheet (legacy helper)."""
+    client = get_gspread_client()
+    if client:
+        return client.open(GOOGLE_SHEET_NAME).sheet1
+    return None
+
+def get_tasks_from_sheet(client):
+    try:
+        sheet = client.open(GOOGLE_SHEET_NAME).worksheet("Tasks")
+        tasks = sheet.col_values(1)[1:] # Skip header
+        return tasks
+    except Exception:
+        return []
+
+def add_task_to_sheet(client, task_name):
+    try:
+        sheet = client.open(GOOGLE_SHEET_NAME).worksheet("Tasks")
+        sheet.append_row([task_name])
+    except Exception as e:
+        st.error(f"Error saving task: {e}")
+
+def delete_task_from_sheet(client, task_name):
+    try:
+        sheet = client.open(GOOGLE_SHEET_NAME).worksheet("Tasks")
+        cell = sheet.find(task_name)
+        sheet.delete_rows(cell.row)
+    except Exception:
+         st.warning("Could not delete task.")
 
 def save_to_google_sheet(task_name, duration, session_type):
     """Logs a completed session to the Google Sheet."""
@@ -140,56 +163,52 @@ def show_analytics():
     st.header("📊 Dashboard")
     
     try:
-        # Fetch data using existing helper
         sheet = init_google_sheet()
         if not sheet:
             st.warning("Could not connect to database for analytics.")
             return
 
+        # Now this works perfectly because headers exist!
         data = sheet.get_all_records()
-        df = pd.DataFrame(data)
         
-        if df.empty:
-            st.info("No data available for analytics yet.")
+        if not data:
+            st.info("No data available yet.")
             return
 
-        # Basic Cleanup & Conversions
-        # Adapt to actual column names: "Duration (mins)" and "Task Name"
-        duration_col = 'Duration (mins)' if 'Duration (mins)' in df.columns else 'Duration'
+        df = pd.DataFrame(data)
         
-        if duration_col in df.columns:
-            df['Duration'] = pd.to_numeric(df[duration_col], errors='coerce').fillna(0)
+        # Ensure Duration is treated as a number
+        if 'Duration' in df.columns:
+            df['Duration'] = pd.to_numeric(df['Duration'], errors='coerce').fillna(0)
         else:
-            st.warning("Duration column not found.")
+            st.error("Error: 'Duration' column missing in Google Sheet. Please add headers.")
             return
-        
-        # Metrics
+
+        # --- Metrics ---
         total_minutes = df['Duration'].sum()
         total_sessions = len(df)
-        avg_session = df['Duration'].mean()
+        avg_session = df['Duration'].mean() if total_sessions > 0 else 0
         
-        # Display Metrics in Columns
         col1, col2, col3 = st.columns(3)
-        col1.metric("Total Focus Time", f"{int(total_minutes)} min")
-        col2.metric("Total Sessions", f"{total_sessions}")
+        col1.metric("Total Focus", f"{int(total_minutes)} min")
+        col2.metric("Sessions", f"{total_sessions}")
         col3.metric("Avg Session", f"{int(avg_session)} min")
         
-        # Chart 1: Daily Activity (Bar Chart)
-        st.subheader("Daily Focus (Minutes)")
+        # --- Chart 1: Daily Activity ---
+        st.subheader("Daily Focus")
         if 'Date' in df.columns:
             # Group by Date and sum Duration
             daily_data = df.groupby('Date')['Duration'].sum()
             st.bar_chart(daily_data)
         
-        # Chart 2: Task Distribution (Bar Chart)
-        st.subheader("Focus by Task")
-        task_col = 'Task Name' if 'Task Name' in df.columns else 'Task'
-        if task_col in df.columns:
-            task_data = df.groupby(task_col)['Duration'].sum().sort_values(ascending=False).head(5) # Top 5 tasks
+        # --- Chart 2: Task Distribution ---
+        st.subheader("Top Tasks")
+        if 'Task' in df.columns:
+            task_data = df.groupby('Task')['Duration'].sum().sort_values(ascending=False).head(5)
             st.bar_chart(task_data)
-            
+
     except Exception as e:
-        st.error(f"Could not load analytics: {str(e)}")
+        st.error(f"Analytics Error: {str(e)}")
 
 # --- Session State Initialization ---
 if 'time_left' not in st.session_state:
@@ -225,26 +244,36 @@ if os.path.exists("service_account.json"):
 st.title("🍅 Pomodoro Focus Timer")
 
 # --- Sidebar: To-Do List ---
+# --- Sidebar: To-Do List ---
 with st.sidebar:
     st.header("📝 My Tasks")
+    
+    # Load client for sidebar operations
+    client = get_gspread_client()
+    current_tasks = []
+    if client:
+        current_tasks = get_tasks_from_sheet(client)
+    
     new_task = st.text_input("Add a new task", placeholder="Enter task name...")
     if st.button("Add Task"):
-        if new_task and new_task not in st.session_state['tasks']:
-            st.session_state['tasks'].append(new_task)
-            st.success(f"Added: {new_task}")
-            st.rerun()
+        if new_task and new_task not in current_tasks:
+            if client:
+                add_task_to_sheet(client, new_task)
+                st.success(f"Added: {new_task}")
+                st.rerun()
     
     st.markdown("---")
     st.subheader("Your List")
-    for i, task in enumerate(st.session_state['tasks']):
+    for i, task in enumerate(current_tasks):
         col_task, col_del = st.columns([0.8, 0.2])
         col_task.write(f"• {task}")
         if col_del.button("❌", key=f"del_{i}"):
-            st.session_state['tasks'].pop(i)
-            st.rerun()
+            if client:
+                delete_task_from_sheet(client, task)
+                st.rerun()
 
 # Input for Task Name (Dropdown + Manual)
-task_options = st.session_state['tasks'] + ["Type manually..."]
+task_options = current_tasks + ["Type manually..."]
 selected_task = st.selectbox("Select Task:", task_options)
 
 if selected_task == "Type manually...":
