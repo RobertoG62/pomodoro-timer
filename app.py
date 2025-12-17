@@ -10,13 +10,18 @@ from google.oauth2.service_account import Credentials
 import json
 
 def play_sound():
-    # HTML javascript hack to auto-play sound in browser
-    sound_url = "https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3"
-    st.markdown(f'''
-        <audio autoplay>
-        <source src="{sound_url}" type="audio/mp3">
+    # Reliable source: Glass Ping from Wikimedia
+    sound_url = "https://upload.wikimedia.org/wikipedia/commons/a/a5/Glass_ping.wav"
+    
+    # HTML5 Audio with autoplay
+    st.markdown(f"""
+        <audio autoplay="true">
+        <source src="{sound_url}" type="audio/wav">
         </audio>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+        
+    # Optional: Add a small text indicator just to be sure function ran
+    st.caption("🔔 Sound playing...")
 
 # --- Configuration ---
 # LOG_FILE = "pomodoro_log.xlsx" # Commented out for Google Sheets
