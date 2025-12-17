@@ -10,18 +10,14 @@ from google.oauth2.service_account import Credentials
 import json
 
 def play_sound():
-    # Reliable source: Glass Ping from Wikimedia
+    # Reliable sound URL (Glass Ping)
     sound_url = "https://upload.wikimedia.org/wikipedia/commons/a/a5/Glass_ping.wav"
     
-    # HTML5 Audio with autoplay
-    st.markdown(f"""
-        <audio autoplay="true">
-        <source src="{sound_url}" type="audio/wav">
-        </audio>
-        """, unsafe_allow_html=True)
-        
-    # Optional: Add a small text indicator just to be sure function ran
-    st.caption("🔔 Sound playing...")
+    # Native Streamlit audio player with autoplay
+    # This creates a visible player which helps confirm the file loaded correctly
+    st.audio(sound_url, format="audio/wav", autoplay=True)
+    
+    st.toast("Ring Ring! 🔔", icon="🔊")
 
 # --- Configuration ---
 # LOG_FILE = "pomodoro_log.xlsx" # Commented out for Google Sheets
