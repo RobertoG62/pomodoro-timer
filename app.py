@@ -135,6 +135,62 @@ def format_time(seconds):
     mins, secs = divmod(seconds, 60)
     return f"{mins:02d}:{secs:02d}"
 
+def show_analytics():
+    st.markdown("---")
+    st.header("📊 Dashboard")
+    
+    try:
+        # Fetch data using existing helper
+        sheet = init_google_sheet()
+        if not sheet:
+            st.warning("Could not connect to database for analytics.")
+            return
+
+        data = sheet.get_all_records()
+        df = pd.DataFrame(data)
+        
+        if df.empty:
+            st.info("No data available for analytics yet.")
+            return
+
+        # Basic Cleanup & Conversions
+        # Adapt to actual column names: "Duration (mins)" and "Task Name"
+        duration_col = 'Duration (mins)' if 'Duration (mins)' in df.columns else 'Duration'
+        
+        if duration_col in df.columns:
+            df['Duration'] = pd.to_numeric(df[duration_col], errors='coerce').fillna(0)
+        else:
+            st.warning("Duration column not found.")
+            return
+        
+        # Metrics
+        total_minutes = df['Duration'].sum()
+        total_sessions = len(df)
+        avg_session = df['Duration'].mean()
+        
+        # Display Metrics in Columns
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total Focus Time", f"{int(total_minutes)} min")
+        col2.metric("Total Sessions", f"{total_sessions}")
+        col3.metric("Avg Session", f"{int(avg_session)} min")
+        
+        # Chart 1: Daily Activity (Bar Chart)
+        st.subheader("Daily Focus (Minutes)")
+        if 'Date' in df.columns:
+            # Group by Date and sum Duration
+            daily_data = df.groupby('Date')['Duration'].sum()
+            st.bar_chart(daily_data)
+        
+        # Chart 2: Task Distribution (Bar Chart)
+        st.subheader("Focus by Task")
+        task_col = 'Task Name' if 'Task Name' in df.columns else 'Task'
+        if task_col in df.columns:
+            task_data = df.groupby(task_col)['Duration'].sum().sort_values(ascending=False).head(5) # Top 5 tasks
+            st.bar_chart(task_data)
+            
+    except Exception as e:
+        st.error(f"Could not load analytics: {str(e)}")
+
 # --- Session State Initialization ---
 if 'time_left' not in st.session_state:
     st.session_state.time_left = 25 * 60 # Default to 25 mins
@@ -284,5 +340,8 @@ if not history_df.empty:
     st.dataframe(history_df, use_container_width=True)
 else:
     st.info("No sessions logged yet.")
+
+# --- Analytics Dashboard ---
+show_analytics()
 
 
