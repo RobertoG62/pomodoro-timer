@@ -142,6 +142,8 @@ if 'timer_running' not in st.session_state:
     st.session_state.timer_running = False
 if 'timer_mode' not in st.session_state:
     st.session_state.timer_mode = "Work" # Work or Break
+if 'tasks' not in st.session_state:
+    st.session_state['tasks'] = []
 
 # --- UI Layout ---
 st.set_page_config(page_title="Pomodoro Timer", page_icon="🍅")
@@ -166,8 +168,33 @@ if os.path.exists("service_account.json"):
 
 st.title("🍅 Pomodoro Focus Timer")
 
-# Input for Task Name
-task_name = st.text_input("Task Name", placeholder="What are you working on?", key="task_input")
+# --- Sidebar: To-Do List ---
+with st.sidebar:
+    st.header("📝 My Tasks")
+    new_task = st.text_input("Add a new task", placeholder="Enter task name...")
+    if st.button("Add Task"):
+        if new_task and new_task not in st.session_state['tasks']:
+            st.session_state['tasks'].append(new_task)
+            st.success(f"Added: {new_task}")
+            st.rerun()
+    
+    st.markdown("---")
+    st.subheader("Your List")
+    for i, task in enumerate(st.session_state['tasks']):
+        col_task, col_del = st.columns([0.8, 0.2])
+        col_task.write(f"• {task}")
+        if col_del.button("❌", key=f"del_{i}"):
+            st.session_state['tasks'].pop(i)
+            st.rerun()
+
+# Input for Task Name (Dropdown + Manual)
+task_options = st.session_state['tasks'] + ["Type manually..."]
+selected_task = st.selectbox("Select Task:", task_options)
+
+if selected_task == "Type manually...":
+    task_name = st.text_input("What are you working on?", placeholder="E.g., Finish Report", key="manual_task_input")
+else:
+    task_name = selected_task
 
 # Timer Display
 st.markdown(
