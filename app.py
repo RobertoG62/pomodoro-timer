@@ -12,20 +12,27 @@ import json
 # --- Helper Functions ---
 
 def play_sound(sound_type="Ding"):
-    """Plays the selected notification sound."""
-    # Default: Glass Ping (Reliable)
-    sound_url = "https://upload.wikimedia.org/wikipedia/commons/a/a5/Glass_ping.wav"
-    
-    # Option 2: Bicycle Bell (New reliable link)
-    if sound_type == "Chime":
-        sound_url = "https://upload.wikimedia.org/wikipedia/commons/b/bc/Bicycle_bell_ringing.wav"
-        
-    # Play Sound using native player
     try:
-        st.audio(sound_url, format="audio/wav", autoplay=True)
-        st.toast(f"Ring Ring! ({sound_type})", icon="🔊")
+        # Determine which file to play
+        if sound_type == "Chime":
+            file_name = "chime.wav"
+            icon = "🎵"
+        else:
+            file_name = "ding.wav"
+            icon = "🔔"
+        
+        # Read the file as bytes (Wait ensures file is fully read)
+        with open(file_name, "rb") as f:
+            audio_bytes = f.read()
+            
+        # Play using st.audio with local bytes
+        st.audio(audio_bytes, format="audio/wav", autoplay=True)
+        st.toast(f"Playing {sound_type}! {icon}", icon="🔊")
+        
+    except FileNotFoundError:
+        st.error(f"Sound file '{file_name}' not found. Please run create_sounds.py locally and push to git.")
     except Exception as e:
-        st.error(f"Sound Error: {e}")
+        st.error(f"Audio Error: {e}")
 
 # --- Configuration ---
 GOOGLE_SHEET_NAME = "pomodoro_db"
