@@ -9,6 +9,15 @@ from oauth2client.service_account import ServiceAccountCredentials
 from google.oauth2.service_account import Credentials
 import json
 
+def play_sound():
+    # HTML javascript hack to auto-play sound in browser
+    sound_url = "https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3"
+    st.markdown(f'''
+        <audio autoplay>
+        <source src="{sound_url}" type="audio/mp3">
+        </audio>
+        ''', unsafe_allow_html=True)
+
 # --- Configuration ---
 # LOG_FILE = "pomodoro_log.xlsx" # Commented out for Google Sheets
 GOOGLE_SHEET_NAME = "pomodoro_db"
@@ -171,7 +180,8 @@ st.markdown(
 )
 
 # columns for controls
-col1, col2, col3 = st.columns(3)
+# columns for controls
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("Start 25m Focus", use_container_width=True):
@@ -188,13 +198,22 @@ with col2:
         st.rerun()
 
 with col3:
+    if st.button("🛠️ Test (5s)", use_container_width=True):
+        st.session_state.timer_mode = "Test Run"
+        st.session_state.time_left = 5
+        st.session_state.timer_running = True
+        st.rerun()
+
+with col4:
     if st.button("Reset", use_container_width=True):
         st.session_state.timer_running = False
         # Reset time based on current mode
         if st.session_state.timer_mode == "Work":
             st.session_state.time_left = 25 * 60
-        else:
+        elif st.session_state.timer_mode == "Break":
             st.session_state.time_left = 5 * 60
+        else:
+            st.session_state.time_left = 25 * 60
         st.rerun()
 
 # --- Timer Logic ---
@@ -207,18 +226,20 @@ if st.session_state.timer_running:
         # Timer finished!
         st.session_state.timer_running = False
         
-        # Play a sound (optional, mostly visual here)
+        # Visual and Sound Feedback
+        play_sound()
+        st.balloons()
+        st.toast("Time is up!", icon="🎉")
         st.success("Timer Finished!")
         
-        # Log if it was work
-        if st.session_state.timer_mode == "Work":
-            duration = 25
+        # Log if it was work or test
+        if st.session_state.timer_mode in ["Work", "Test Run"]:
+            duration = 25 if st.session_state.timer_mode == "Work" else 0.08
             t_name = task_name if task_name else "Untitled Task"
             
-            # Save to Google Sheets instead of Excel
+            # Save to Google Sheets
             print(">>> STARTING SAVE TO GOOGLE SHEETS...")
-            save_to_google_sheet(t_name, duration, "Work")
-            # save_to_excel(t_name, duration, "Work")
+            save_to_google_sheet(t_name, duration, st.session_state.timer_mode)
             
             st.toast("Great job! Session logged.")
         elif st.session_state.timer_mode == "Break":
