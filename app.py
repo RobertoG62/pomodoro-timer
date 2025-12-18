@@ -195,6 +195,15 @@ if 'tasks' not in st.session_state:
 # --- UI Layout ---
 st.set_page_config(page_title="Pomodoro Timer", page_icon="🍅")
 
+# Request Notification Permission on load
+st.markdown("""
+    <script>
+        if ("Notification" in window) {
+            Notification.requestPermission();
+        }
+    </script>
+""", unsafe_allow_html=True)
+
 # --- Helper: Print Secrets for Cloud Deployment ---
 if os.path.exists("service_account.json"):
     # Only print if we are likely local (secrets might complicate this check, but file existence is good indicator)
@@ -322,6 +331,18 @@ if st.session_state.timer_running:
         
         # Visual and Sound Feedback
         play_sound(sound_choice)
+
+        # Trigger System Notification via JavaScript
+        st.markdown("""
+            <script>
+                if (Notification.permission === "granted") {
+                    new Notification("🍅 Pomodoro Finished!", {
+                        body: "Time to take a break!",
+                        icon: "https://emojicdn.elk.sh/🍅"
+                    });
+                }
+            </script>
+        """, unsafe_allow_html=True)
         st.balloons()
         st.toast("Time is up!", icon="🎉")
         
